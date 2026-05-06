@@ -1,6 +1,6 @@
 TITLE "Sistema com Divisor e Contador";
 
-SUBDESIGN divisor_10khz\contador_2bits
+SUBDESIGN divisor_10khz__contador_2bits
 (
     clk_in       : INPUT;    -- Clock principal
     q_count[1..0]: OUTPUT;   -- Saídas do contador de 2 bits
