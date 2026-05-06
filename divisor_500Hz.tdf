@@ -1,0 +1,25 @@
+TITLE "Divisor de Clock 500Hz - Buzzer";
+SUBDESIGN divisor_500Hz (
+    clk_50MHz : INPUT;
+    clk_500Hz : OUTPUT;
+)
+VARIABLE
+    contador[15..0] : DFF; -- 16 bits
+    estado_atual    : TFF; 
+BEGIN
+    -- Ligando os clocks
+    contador[].clk = clk_50MHz;
+    estado_atual.clk = clk_50MHz;
+
+    -- Lógica do Contador para 500 Hz
+    IF (contador[].q == 49999) THEN
+        contador[].d = 0;     -- Zera a contagem
+        estado_atual.t = VCC; -- Inverte o estado
+    ELSE
+        contador[].d = contador[].q + 1; -- Incrementa
+        estado_atual.t = GND;            -- Mantém o estado
+    END IF;
+
+    -- Saída
+    clk_500Hz = estado_atual.q;
+END;
