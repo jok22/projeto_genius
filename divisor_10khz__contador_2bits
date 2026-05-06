@@ -3,7 +3,7 @@ TITLE "Sistema com Divisor e Contador";
 SUBDESIGN divisor_10khz__contador_2bits
 (
     clk_in       : INPUT;    -- Clock principal
-    a[1..0]: OUTPUT;   -- Saídas do contador de 2 bits
+    a0, a1: OUTPUT;   -- Saídas do contador de 2 bits
 )
 
 VARIABLE
@@ -50,7 +50,7 @@ BEGIN
     -------------------------------------------------------
     -- 3. ATRIBUIÇÃO DAS SAÍDAS
     -------------------------------------------------------
-    a[0] = ff_bit0.q;
-    a[1] = ff_bit1.q;
+    a0 = ff_bit0.q;
+    a1 = ff_bit1.q;
 
 END;
