@@ -1,0 +1,259 @@
+SUBDESIGN genius
+(
+    clock   : INPUT;
+    rst_n   : INPUT;
+
+    key     : INPUT[4..1];
+
+    led     : OUTPUT[4..1];
+
+    seg     : OUTPUT[7..0];
+    dig     : OUTPUT[4..1];
+
+    buzzer  : OUTPUT
+)
+
+VARIABLE
+
+    ------------------------------------------------------------------
+    -- CLOCK
+    ------------------------------------------------------------------
+    div_clk : DFF[25..0];
+    tick    : NODE;     -- lento (jogo)
+    mux_clk : NODE;     -- rápido (display)
+
+    ------------------------------------------------------------------
+    -- FSM
+    ------------------------------------------------------------------
+    estado  : DFF[2..0];
+    tempo   : DFF[4..0];
+
+    ------------------------------------------------------------------
+    -- JOGO
+    ------------------------------------------------------------------
+    rodada  : DFF[4..0];
+    indice  : DFF[4..0];
+    pontos  : DFF[4..0];
+    recorde : DFF[4..0];
+
+    ------------------------------------------------------------------
+    -- RANDOM (LFSR simples)
+    ------------------------------------------------------------------
+    random  : DFF[3..0];
+
+    ------------------------------------------------------------------
+    -- SEQUÊNCIA (20 posições)
+    ------------------------------------------------------------------
+    seq : DFF[39..0]; -- 20 valores de 2 bits
+
+    valor_seq : NODE[1..0];
+    valor_btn : NODE[1..0];
+
+    apertou : NODE;
+    acertou : NODE;
+
+    ------------------------------------------------------------------
+    -- DISPLAY
+    ------------------------------------------------------------------
+    display0 : NODE[3..0];
+    display1 : NODE[3..0];
+    display2 : NODE[3..0];
+    display3 : NODE[3..0];
+
+    mux      : DFF[1..0];
+    seg_val  : NODE[3..0];
+
+BEGIN
+
+    ------------------------------------------------------------------
+    -- DIVISOR DE CLOCK
+    ------------------------------------------------------------------
+    div_clk[].clk = clock;
+    div_clk[].clrn = rst_n;
+    div_clk[] = div_clk[] + 1;
+
+    tick   = div_clk[24]; -- jogo lento
+    mux_clk = div_clk[15]; -- display rápido
+
+    ------------------------------------------------------------------
+    -- REGISTRADORES
+    ------------------------------------------------------------------
+    estado[].clk = tick;
+    estado[].clrn = rst_n;
+
+    tempo[].clk = tick;
+    tempo[].clrn = rst_n;
+
+    rodada[].clk = tick;
+    rodada[].clrn = rst_n;
+
+    indice[].clk = tick;
+    indice[].clrn = rst_n;
+
+    pontos[].clk = tick;
+    pontos[].clrn = rst_n;
+
+    recorde[].clk = tick;
+    recorde[].clrn = rst_n;
+
+    random[].clk = tick;
+    random[].clrn = rst_n;
+
+    seq[].clk = tick;
+    seq[].clrn = rst_n;
+
+    mux[].clk = mux_clk;
+    mux[].clrn = rst_n;
+
+    ------------------------------------------------------------------
+    -- LFSR (random melhorado)
+    ------------------------------------------------------------------
+    random[] = {random[2..0], random[3] $ random[1]};
+
+    ------------------------------------------------------------------
+    -- BOTÕES (debounce simples)
+    ------------------------------------------------------------------
+    apertou = !key[1] # !key[2] # !key[3] # !key[4];
+
+    valor_btn[] =
+        (!key[1]) ? B"00" :
+        (!key[2]) ? B"01" :
+        (!key[3]) ? B"10" :
+        (!key[4]) ? B"11" :
+                    B"00";
+
+    ------------------------------------------------------------------
+    -- LEITURA DA SEQUÊNCIA (cada posição = 2 bits)
+    ------------------------------------------------------------------
+    valor_seq[] = seq[indice[]*2 + 1 .. indice[]*2];
+
+    acertou = (valor_btn[] == valor_seq[]);
+
+    ------------------------------------------------------------------
+    -- FSM
+    ------------------------------------------------------------------
+    IF estado[] == B"000" THEN -- IDLE
+
+        rodada[] = 0;
+        pontos[] = 0;
+
+        IF !key[1] THEN
+            estado[] = B"001";
+        END IF;
+
+    ELSIF estado[] == B"001" THEN -- ADD
+
+        seq[rodada[]*2 + 1 .. rodada[]*2] = random[1..0];
+
+        indice[] = 0;
+        estado[] = B"010";
+
+    ELSIF estado[] == B"010" THEN -- SHOW
+
+        tempo[] = tempo[] + 1;
+
+        IF tempo[] == 8 THEN
+            tempo[] = 0;
+
+            IF indice[] == rodada[] THEN
+                indice[] = 0;
+                estado[] = B"011";
+            ELSE
+                indice[] = indice[] + 1;
+            END IF;
+        END IF;
+
+    ELSIF estado[] == B"011" THEN -- WAIT
+
+        IF apertou THEN
+
+            IF acertou THEN
+
+                IF indice[] == rodada[] THEN
+                    pontos[] = pontos[] + 1;
+                    estado[] = B"100";
+                ELSE
+                    indice[] = indice[] + 1;
+                END IF;
+
+            ELSE
+                estado[] = B"101";
+            END IF;
+
+        END IF;
+
+    ELSIF estado[] == B"100" THEN -- OK
+
+        IF pontos[] > recorde[] THEN
+            recorde[] = pontos[];
+        END IF;
+
+        rodada[] = rodada[] + 1;
+        estado[] = B"001";
+
+    ELSE -- ERRO
+
+        IF pontos[] > recorde[] THEN
+            recorde[] = pontos[];
+        END IF;
+
+        estado[] = B"000";
+
+    END IF;
+
+    ------------------------------------------------------------------
+    -- LEDs
+    ------------------------------------------------------------------
+    led[1] = (valor_seq[] == B"00");
+    led[2] = (valor_seq[] == B"01");
+    led[3] = (valor_seq[] == B"10");
+    led[4] = (valor_seq[] == B"11");
+
+    ------------------------------------------------------------------
+    -- BUZZER (3 modos)
+    ------------------------------------------------------------------
+    buzzer =
+        (estado[] == B"010") & div_clk[18] #   -- sequência
+        (estado[] == B"100") & div_clk[16] #   -- acerto
+        (estado[] == B"101") & div_clk[20];    -- erro
+
+    ------------------------------------------------------------------
+    -- DISPLAY (4 dígitos)
+    ------------------------------------------------------------------
+    display0 = pontos[];
+    display1 = rodada[];
+    display2 = recorde[];
+    display3 = 0;
+
+    CASE mux[] IS
+        WHEN B"00" =>
+            dig[] = B"1110";
+            seg_val = display0;
+        WHEN B"01" =>
+            dig[] = B"1101";
+            seg_val = display1;
+        WHEN B"10" =>
+            dig[] = B"1011";
+            seg_val = display2;
+        WHEN OTHERS =>
+            dig[] = B"0111";
+            seg_val = display3;
+    END CASE;
+
+    ------------------------------------------------------------------
+    -- DECODIFICADOR 7 SEG (ânodo comum)
+    ------------------------------------------------------------------
+    seg[] =
+        (seg_val == 0) ? B"1000000" :
+        (seg_val == 1) ? B"1111001" :
+        (seg_val == 2) ? B"0100100" :
+        (seg_val == 3) ? B"0110000" :
+        (seg_val == 4) ? B"0011001" :
+        (seg_val == 5) ? B"0010010" :
+        (seg_val == 6) ? B"0000010" :
+        (seg_val == 7) ? B"1111000" :
+        (seg_val == 8) ? B"0000000" :
+        (seg_val == 9) ? B"0010000" :
+                         B"1111111";
+
+END;

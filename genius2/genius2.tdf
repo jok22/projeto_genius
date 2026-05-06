@@ -1,0 +1,295 @@
+SUBDESIGN genius2
+(
+    clock : INPUT;
+    rst_n : INPUT;
+
+    key[4..1] : INPUT;
+    led[4..1] : OUTPUT;
+
+    seg[7..0] : OUTPUT;
+    dig[4..1] : OUTPUT;
+
+    buzzer : OUTPUT;
+)
+
+VARIABLE
+
+    div_clk[25..0] : DFF;
+    tick : NODE;
+
+    estado[2..0] : DFF;
+    tempo[4..0] : DFF;
+
+    rodada[4..0] : DFF;
+    indice[4..0] : DFF;
+    pontos[4..0] : DFF;
+    recorde[4..0] : DFF;
+
+    random[3..0] : DFF;
+
+    seq_00[1..0] : DFF;
+    seq_01[1..0] : DFF;
+    seq_02[1..0] : DFF;
+    seq_03[1..0] : DFF;
+    seq_04[1..0] : DFF;
+    seq_05[1..0] : DFF;
+    seq_06[1..0] : DFF;
+    seq_07[1..0] : DFF;
+    seq_08[1..0] : DFF;
+    seq_09[1..0] : DFF;
+
+    valor_seq[1..0] : NODE;
+    valor_btn[1..0] : NODE;
+    display_val[3..0] : NODE;
+
+    apertou : NODE;
+    acertou : NODE;
+
+    estado_show : NODE;
+    estado_ok : NODE;
+    estado_erro : NODE;
+
+    valor_00 : NODE;
+    valor_01 : NODE;
+    valor_10 : NODE;
+    valor_11 : NODE;
+
+    igual_seq : NODE;
+
+BEGIN
+
+    div_clk[].clk = clock;
+    div_clk[].clrn = rst_n;
+    div_clk[] = div_clk[] + 1;
+
+    tick = div_clk[24];
+
+    estado[].clk = tick;
+    estado[].clrn = rst_n;
+
+    tempo[].clk = tick;
+    tempo[].clrn = rst_n;
+
+    rodada[].clk = tick;
+    rodada[].clrn = rst_n;
+
+    indice[].clk = tick;
+    indice[].clrn = rst_n;
+
+    pontos[].clk = tick;
+    pontos[].clrn = rst_n;
+
+    recorde[].clk = tick;
+    recorde[].clrn = rst_n;
+
+    random[].clk = tick;
+    random[].clrn = rst_n;
+
+    seq_00[].clk = tick; seq_00[].clrn = rst_n;
+    seq_01[].clk = tick; seq_01[].clrn = rst_n;
+    seq_02[].clk = tick; seq_02[].clrn = rst_n;
+    seq_03[].clk = tick; seq_03[].clrn = rst_n;
+    seq_04[].clk = tick; seq_04[].clrn = rst_n;
+    seq_05[].clk = tick; seq_05[].clrn = rst_n;
+    seq_06[].clk = tick; seq_06[].clrn = rst_n;
+    seq_07[].clk = tick; seq_07[].clrn = rst_n;
+    seq_08[].clk = tick; seq_08[].clrn = rst_n;
+    seq_09[].clk = tick; seq_09[].clrn = rst_n;
+
+    random[3] = random[2];
+    random[2] = random[1];
+    random[1] = random[0];
+    random[0] = random[3] $ random[1];
+
+    apertou = !key[1] # !key[2] # !key[3] # !key[4];
+
+    IF !key[1] THEN
+        valor_btn[] = B"00";
+    ELSIF !key[2] THEN
+        valor_btn[] = B"01";
+    ELSIF !key[3] THEN
+        valor_btn[] = B"10";
+    ELSIF !key[4] THEN
+        valor_btn[] = B"11";
+    ELSE
+        valor_btn[] = B"00";
+    END IF;
+
+    IF indice[] == 0 THEN
+        valor_seq[] = seq_00[];
+    ELSIF indice[] == 1 THEN
+        valor_seq[] = seq_01[];
+    ELSIF indice[] == 2 THEN
+        valor_seq[] = seq_02[];
+    ELSIF indice[] == 3 THEN
+        valor_seq[] = seq_03[];
+    ELSIF indice[] == 4 THEN
+        valor_seq[] = seq_04[];
+    ELSIF indice[] == 5 THEN
+        valor_seq[] = seq_05[];
+    ELSIF indice[] == 6 THEN
+        valor_seq[] = seq_06[];
+    ELSIF indice[] == 7 THEN
+        valor_seq[] = seq_07[];
+    ELSIF indice[] == 8 THEN
+        valor_seq[] = seq_08[];
+    ELSE
+        valor_seq[] = seq_09[];
+    END IF;
+
+    igual_seq = !(valor_btn[1] $ valor_seq[1]) & !(valor_btn[0] $ valor_seq[0]);
+    acertou = apertou & igual_seq;
+
+    estado_show = !estado[2] & estado[1] & !estado[0];
+    estado_ok   = estado[2] & !estado[1] & !estado[0];
+    estado_erro = estado[2] & !estado[1] & estado[0];
+
+    valor_00 = !valor_seq[1] & !valor_seq[0];
+    valor_01 = !valor_seq[1] & valor_seq[0];
+    valor_10 = valor_seq[1] & !valor_seq[0];
+    valor_11 = valor_seq[1] & valor_seq[0];
+
+    IF estado[] == B"000" THEN
+
+        rodada[] = B"00000";
+        pontos[] = B"00000";
+        indice[] = B"00000";
+        tempo[] = B"00000";
+
+        IF !key[1] THEN
+            estado[] = B"001";
+        ELSE
+            estado[] = B"000";
+        END IF;
+
+    ELSIF estado[] == B"001" THEN
+
+        IF rodada[] == 0 THEN
+            seq_00[] = random[1..0];
+        ELSIF rodada[] == 1 THEN
+            seq_01[] = random[1..0];
+        ELSIF rodada[] == 2 THEN
+            seq_02[] = random[1..0];
+        ELSIF rodada[] == 3 THEN
+            seq_03[] = random[1..0];
+        ELSIF rodada[] == 4 THEN
+            seq_04[] = random[1..0];
+        ELSIF rodada[] == 5 THEN
+            seq_05[] = random[1..0];
+        ELSIF rodada[] == 6 THEN
+            seq_06[] = random[1..0];
+        ELSIF rodada[] == 7 THEN
+            seq_07[] = random[1..0];
+        ELSIF rodada[] == 8 THEN
+            seq_08[] = random[1..0];
+        ELSE
+            seq_09[] = random[1..0];
+        END IF;
+
+        indice[] = B"00000";
+        tempo[] = B"00000";
+        estado[] = B"010";
+
+    ELSIF estado[] == B"010" THEN
+
+        tempo[] = tempo[] + 1;
+
+        IF tempo[] == 8 THEN
+            tempo[] = B"00000";
+
+            IF indice[] == rodada[] THEN
+                indice[] = B"00000";
+                estado[] = B"011";
+            ELSE
+                indice[] = indice[] + 1;
+                estado[] = B"010";
+            END IF;
+
+        ELSE
+            estado[] = B"010";
+        END IF;
+
+    ELSIF estado[] == B"011" THEN
+
+        IF apertou THEN
+
+            IF acertou THEN
+
+                IF indice[] == rodada[] THEN
+                    pontos[] = pontos[] + 1;
+                    estado[] = B"100";
+                ELSE
+                    indice[] = indice[] + 1;
+                    estado[] = B"011";
+                END IF;
+
+            ELSE
+                estado[] = B"101";
+            END IF;
+
+        ELSE
+            estado[] = B"011";
+        END IF;
+
+    ELSIF estado[] == B"100" THEN
+
+        IF pontos[] > recorde[] THEN
+            recorde[] = pontos[];
+        END IF;
+
+        IF rodada[] == 9 THEN
+            estado[] = B"101";
+        ELSE
+            rodada[] = rodada[] + 1;
+            estado[] = B"001";
+        END IF;
+
+    ELSE
+
+        IF pontos[] > recorde[] THEN
+            recorde[] = pontos[];
+        END IF;
+
+        estado[] = B"000";
+
+    END IF;
+
+    led[1] = estado_show & valor_00;
+    led[2] = estado_show & valor_01;
+    led[3] = estado_show & valor_10;
+    led[4] = estado_show & valor_11;
+
+    buzzer = estado_show & div_clk[18] # estado_ok & div_clk[16] # estado_erro & div_clk[20];
+
+    dig[1] = GND;
+    dig[2] = VCC;
+    dig[3] = VCC;
+    dig[4] = VCC;
+
+    display_val[] = pontos[3..0];
+
+    IF display_val[] == 0 THEN
+        seg[] = B"11000000";
+    ELSIF display_val[] == 1 THEN
+        seg[] = B"11111001";
+    ELSIF display_val[] == 2 THEN
+        seg[] = B"10100100";
+    ELSIF display_val[] == 3 THEN
+        seg[] = B"10110000";
+    ELSIF display_val[] == 4 THEN
+        seg[] = B"10011001";
+    ELSIF display_val[] == 5 THEN
+        seg[] = B"10010010";
+    ELSIF display_val[] == 6 THEN
+        seg[] = B"10000010";
+    ELSIF display_val[] == 7 THEN
+        seg[] = B"11111000";
+    ELSIF display_val[] == 8 THEN
+        seg[] = B"10000000";
+    ELSIF display_val[] == 9 THEN
+        seg[] = B"10010000";
+    ELSE
+        seg[] = B"11111111";
+    END IF;
+
+END;
