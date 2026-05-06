@@ -1,0 +1,56 @@
+TITLE "Debounce";
+SUBDESIGN Debounce
+(
+	clock, key[1] : INPUT;
+	led[1] : OUTPUT;
+)
+VARIABLE
+	FF1, FF2: DFF; --Declarando os FlipFlops que vamos usar
+	FF3 : DFFE; -- DFF com um ativador
+	count[23..0] : DFF;
+	SaidaX : NODE;			-- Saída da porta XOR
+	Exit_Counter : NODE; -- Saída do Contador
+BEGIN 
+-- LIGANDO TUDO --
+		FF1.clk = clock;
+		FF2.clk = clock;
+		FF3.clk = clock;
+		count[].clk = clock;
+		
+-- ENTRADAS DOS FF's --
+		FF1.d = key[1];
+		FF2.d = FF1.q;
+	
+-- Criar a ideia da XOR --
+		SaidaX = FF1.q $ FF2.q;
+		
+-- Lógica da relação entre a XOR e o contador --
+
+IF SaidaX THEN
+	count[].d = 0;				-- se tiver alguma oscilação ele zera a entrada --
+	
+ELSIF count[].q < 500000 THEN 
+	count[].d = count[].q + 1; -- incrementação --
+	
+ELSE
+	count[].d = count[].q; -- trava no valor máximo --
+	
+END IF;
+
+-- Verificação se a contagem chegou ao final --
+
+IF count[].q == 500000 THEN
+	Exit_Counter = VCC;
+	
+ELSE 
+	Exit_Counter = GND;
+	
+END IF;
+
+-- Lógica da ativação do FF3 --
+FF3.ENA = Exit_Counter;
+FF3.d = FF2.q;
+
+-- Saída do Debunce -- 
+led[1] = FF3.q;
+END;
