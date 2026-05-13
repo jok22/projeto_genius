@@ -1,4 +1,4 @@
-SUBDESIGN fezes
+SUBDESIGN random
 (
     clock : INPUT;
     led[4..1] : OUTPUT;
@@ -22,7 +22,7 @@ BEGIN
     -- CLOCK LENTO DO LFSR
     ----------------------------------------------------------------
 
-    lfsr[].clk = counter[25].q;
+    lfsr[].clk = counter[23].q;
 
     ----------------------------------------------------------------
     -- SEED INICIAL
@@ -67,7 +67,7 @@ BEGIN
     ----------------------------------------------------------------
 
     -- metade do tempo apagado
-    IF counter[24].q THEN
+    IF counter[23].q THEN
 
         -- LEDs ativos em LOW
         CASE lfsr[1..0].q IS
