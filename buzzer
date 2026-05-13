@@ -1,0 +1,72 @@
+SUBDESIGN buzzer_control
+(
+    clk        : INPUT;
+    reset      : INPUT;
+    mode[2..0] : INPUT;
+    buzzer     : OUTPUT
+)
+
+VARIABLE
+
+    cont[17..0] : DFF;
+    buzz        : DFF;
+
+BEGIN
+
+    cont[].clk = clk;
+    cont[].clrn = !reset;
+
+    buzz.clk = clk;
+    buzz.clrn = !reset;
+
+    CASE mode[] IS
+
+        WHEN 0 =>
+            cont[].d = 0;
+            buzz.d = GND;
+
+        WHEN 1 =>
+            IF cont[].q == 25000 THEN
+                cont[].d = 0;
+                buzz.d = !buzz.q;
+            ELSE
+                cont[].d = cont[].q + 1;
+                buzz.d = buzz.q;
+            END IF;
+
+        WHEN 2 =>
+            IF cont[].q == 12000 THEN
+                cont[].d = 0;
+                buzz.d = !buzz.q;
+            ELSE
+                cont[].d = cont[].q + 1;
+                buzz.d = buzz.q;
+            END IF;
+
+        WHEN 3 =>
+            IF cont[].q == 50000 THEN
+                cont[].d = 0;
+                buzz.d = !buzz.q;
+            ELSE
+                cont[].d = cont[].q + 1;
+                buzz.d = buzz.q;
+            END IF;
+
+        WHEN 4 =>
+            IF cont[].q == 18000 THEN
+                cont[].d = 0;
+                buzz.d = !buzz.q;
+            ELSE
+                cont[].d = cont[].q + 1;
+                buzz.d = buzz.q;
+            END IF;
+
+        WHEN OTHERS =>
+            cont[].d = 0;
+            buzz.d = GND;
+
+    END CASE;
+
+    buzzer = buzz.q;
+
+END;
