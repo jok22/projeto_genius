@@ -1,0 +1,22 @@
+SUBDESIGN sevenseg
+(
+    value[3..0] : INPUT;
+    seg[6..0]   : OUTPUT
+)
+
+BEGIN
+
+    CASE value[] IS
+
+        WHEN 0 => seg[] = B"1000000";
+        WHEN 1 => seg[] = B"1111001";
+        WHEN 2 => seg[] = B"0100100";
+        WHEN 3 => seg[] = B"0110000";
+        WHEN 4 => seg[] = B"0011001";
+        WHEN 5 => seg[] = B"0010010";
+        WHEN 6 => seg[] = B"0000010";
+        WHEN 7 => seg[] = B"1111000";
+        WHEN 8 => seg[] = B"0000000";
+        WHEN 9 => seg[] = B"0010000";
+
+        WHEN OTHERS => seg[] = B"1111111";
