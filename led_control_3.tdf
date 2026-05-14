@@ -1,0 +1,28 @@
+SUBDESIGN led_control_3
+(
+    enable      : INPUT;
+    value[1..0] : INPUT;
+    leds[3..0]  : OUTPUT
+)
+
+BEGIN
+
+    IF enable THEN
+
+        CASE value[] IS
+
+            WHEN 1 => leds[] = B"0001";
+            WHEN 2 => leds[] = B"0010";
+            WHEN 3 => leds[] = B"0100";
+
+            WHEN OTHERS => leds[] = B"0000";
+
+        END CASE;
+
+    ELSE
+
+        leds[] = B"0000";
+
+    END IF;
+
+END;

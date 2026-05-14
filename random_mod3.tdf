@@ -1,0 +1,24 @@
+SUBDESIGN random_mod3
+(
+    clk          : INPUT;
+    reset        : INPUT;
+    random[1..0] : OUTPUT
+)
+
+VARIABLE
+    cont[1..0] : DFF;
+
+BEGIN
+
+    cont[].clk = clk;
+    cont[].clrn = !reset;
+
+    IF cont[].q == 3 THEN
+        cont[].d = 1;
+    ELSE
+        cont[].d = cont[].q + 1;
+    END IF;
+
+    random[] = cont[].q;
+
+END;

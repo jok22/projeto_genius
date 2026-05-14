@@ -1,0 +1,130 @@
+SUBDESIGN seq_memory
+(
+    clk            : INPUT;
+    reset          : INPUT;
+    wr_en          : INPUT;
+    wr_addr[4..0]  : INPUT;
+    rd_addr[4..0]  : INPUT;
+    data_in[1..0]  : INPUT;
+    data_out[1..0] : OUTPUT
+)
+
+VARIABLE
+
+    m00[1..0] : DFF;
+    m01[1..0] : DFF;
+    m02[1..0] : DFF;
+    m03[1..0] : DFF;
+    m04[1..0] : DFF;
+    m05[1..0] : DFF;
+    m06[1..0] : DFF;
+    m07[1..0] : DFF;
+    m08[1..0] : DFF;
+    m09[1..0] : DFF;
+    m10[1..0] : DFF;
+    m11[1..0] : DFF;
+    m12[1..0] : DFF;
+    m13[1..0] : DFF;
+    m14[1..0] : DFF;
+    m15[1..0] : DFF;
+    m16[1..0] : DFF;
+    m17[1..0] : DFF;
+    m18[1..0] : DFF;
+    m19[1..0] : DFF;
+
+BEGIN
+
+    m00[].clk = clk;   m00[].clrn = !reset;
+    m01[].clk = clk;   m01[].clrn = !reset;
+    m02[].clk = clk;   m02[].clrn = !reset;
+    m03[].clk = clk;   m03[].clrn = !reset;
+    m04[].clk = clk;   m04[].clrn = !reset;
+    m05[].clk = clk;   m05[].clrn = !reset;
+    m06[].clk = clk;   m06[].clrn = !reset;
+    m07[].clk = clk;   m07[].clrn = !reset;
+    m08[].clk = clk;   m08[].clrn = !reset;
+    m09[].clk = clk;   m09[].clrn = !reset;
+    m10[].clk = clk;   m10[].clrn = !reset;
+    m11[].clk = clk;   m11[].clrn = !reset;
+    m12[].clk = clk;   m12[].clrn = !reset;
+    m13[].clk = clk;   m13[].clrn = !reset;
+    m14[].clk = clk;   m14[].clrn = !reset;
+    m15[].clk = clk;   m15[].clrn = !reset;
+    m16[].clk = clk;   m16[].clrn = !reset;
+    m17[].clk = clk;   m17[].clrn = !reset;
+    m18[].clk = clk;   m18[].clrn = !reset;
+    m19[].clk = clk;   m19[].clrn = !reset;
+
+    m00[].d = m00[].q;
+    m01[].d = m01[].q;
+    m02[].d = m02[].q;
+    m03[].d = m03[].q;
+    m04[].d = m04[].q;
+    m05[].d = m05[].q;
+    m06[].d = m06[].q;
+    m07[].d = m07[].q;
+    m08[].d = m08[].q;
+    m09[].d = m09[].q;
+    m10[].d = m10[].q;
+    m11[].d = m11[].q;
+    m12[].d = m12[].q;
+    m13[].d = m13[].q;
+    m14[].d = m14[].q;
+    m15[].d = m15[].q;
+    m16[].d = m16[].q;
+    m17[].d = m17[].q;
+    m18[].d = m18[].q;
+    m19[].d = m19[].q;
+
+    IF wr_en THEN
+
+        CASE wr_addr[] IS
+            WHEN 0  => m00[].d = data_in[];
+            WHEN 1  => m01[].d = data_in[];
+            WHEN 2  => m02[].d = data_in[];
+            WHEN 3  => m03[].d = data_in[];
+            WHEN 4  => m04[].d = data_in[];
+            WHEN 5  => m05[].d = data_in[];
+            WHEN 6  => m06[].d = data_in[];
+            WHEN 7  => m07[].d = data_in[];
+            WHEN 8  => m08[].d = data_in[];
+            WHEN 9  => m09[].d = data_in[];
+            WHEN 10 => m10[].d = data_in[];
+            WHEN 11 => m11[].d = data_in[];
+            WHEN 12 => m12[].d = data_in[];
+            WHEN 13 => m13[].d = data_in[];
+            WHEN 14 => m14[].d = data_in[];
+            WHEN 15 => m15[].d = data_in[];
+            WHEN 16 => m16[].d = data_in[];
+            WHEN 17 => m17[].d = data_in[];
+            WHEN 18 => m18[].d = data_in[];
+            WHEN 19 => m19[].d = data_in[];
+        END CASE;
+
+    END IF;
+
+    CASE rd_addr[] IS
+        WHEN 0  => data_out[] = m00[].q;
+        WHEN 1  => data_out[] = m01[].q;
+        WHEN 2  => data_out[] = m02[].q;
+        WHEN 3  => data_out[] = m03[].q;
+        WHEN 4  => data_out[] = m04[].q;
+        WHEN 5  => data_out[] = m05[].q;
+        WHEN 6  => data_out[] = m06[].q;
+        WHEN 7  => data_out[] = m07[].q;
+        WHEN 8  => data_out[] = m08[].q;
+        WHEN 9  => data_out[] = m09[].q;
+        WHEN 10 => data_out[] = m10[].q;
+        WHEN 11 => data_out[] = m11[].q;
+        WHEN 12 => data_out[] = m12[].q;
+        WHEN 13 => data_out[] = m13[].q;
+        WHEN 14 => data_out[] = m14[].q;
+        WHEN 15 => data_out[] = m15[].q;
+        WHEN 16 => data_out[] = m16[].q;
+        WHEN 17 => data_out[] = m17[].q;
+        WHEN 18 => data_out[] = m18[].q;
+        WHEN 19 => data_out[] = m19[].q;
+        WHEN OTHERS => data_out[] = 0;
+    END CASE;
+
+END;

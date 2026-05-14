@@ -1,0 +1,43 @@
+SUBDESIGN debouncer
+(
+    clk      : INPUT;
+    reset    : INPUT;
+    tick_1ms : INPUT;
+    btn_in   : INPUT;
+    btn_out  : OUTPUT
+)
+
+VARIABLE
+    shift[3..0] : DFF;
+    stable      : DFF;
+
+BEGIN
+
+    shift[].clk = clk;
+    shift[].clrn = !reset;
+
+    stable.clk = clk;
+    stable.clrn = !reset;
+
+    IF tick_1ms THEN
+
+        shift[].d = (shift[2..0].q, btn_in);
+
+        IF shift[].q == B"1111" THEN
+            stable.d = VCC;
+        ELSIF shift[].q == B"0000" THEN
+            stable.d = GND;
+        ELSE
+            stable.d = stable.q;
+        END IF;
+
+    ELSE
+
+        shift[].d = shift[].q;
+        stable.d = stable.q;
+
+    END IF;
+
+    btn_out = stable.q;
+
+END;

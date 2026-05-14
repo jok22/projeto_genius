@@ -1,0 +1,556 @@
+SUBDESIGN genius4
+(
+    clock  : INPUT;
+    rst_n  : INPUT;
+
+    key    : INPUT[4..1];
+
+    led    : OUTPUT[4..1];
+    dig    : OUTPUT[4..1];
+    seg    : OUTPUT[7..0];
+    buzzer : OUTPUT
+)
+
+VARIABLE
+
+    reset : NODE;
+
+    clk1  : clk_div;
+
+    db_start : debouncer;
+    db1      : debouncer;
+    db2      : debouncer;
+    db3      : debouncer;
+
+    rand1 : random_mod3;
+    mem1  : seq_memory;
+
+    enc1  : button_encoder_3btn;
+    cmp1  : comparator;
+
+    score1 : score_control;
+
+    bcd_score : bcd_0_20;
+    bcd_rec   : bcd_0_20;
+
+    display1 : display_mux_4dig;
+
+    ledc  : led_control_3;
+    buzz1 : buzzer_control;
+
+    tick_1ms : NODE;
+
+    start_clean : NODE;
+    start_old   : DFF;
+    start_pulse : NODE;
+
+    btn_clean : NODE[2..0];
+    btn_old   : DFF[2..0];
+    btn_pulse : NODE[2..0];
+
+    btn_code  : NODE[1..0];
+    btn_valid : NODE;
+
+    random_value : NODE[1..0];
+
+    mem_wr_en   : NODE;
+    mem_wr_addr : NODE[4..0];
+    mem_rd_addr : NODE[4..0];
+    mem_din     : NODE[1..0];
+    mem_dout    : NODE[1..0];
+
+    resposta_correta : NODE;
+
+    score_clear  : NODE;
+    score_inc    : NODE;
+    game_over    : NODE;
+    score_value  : NODE[4..0];
+    record_value : NODE[4..0];
+
+    score_dez : NODE[3..0];
+    score_uni : NODE[3..0];
+    rec_dez   : NODE[3..0];
+    rec_uni   : NODE[3..0];
+
+    led_enable : NODE;
+    led_value  : NODE[1..0];
+    led_temp   : NODE[3..0];
+
+    buzzer_mode : NODE[2..0];
+
+    estado : DFF[3..0];
+
+    rodada      : DFF[4..0];
+    indice_show : DFF[4..0];
+    indice_resp : DFF[4..0];
+    timer       : DFF[26..0];
+
+BEGIN
+
+    reset = !rst_n;
+
+    ------------------------------------------------------------
+    -- CLOCK 1 ms
+    ------------------------------------------------------------
+
+    clk1.clk = clock;
+    clk1.reset = reset;
+    tick_1ms = clk1.tick_1ms;
+
+    ------------------------------------------------------------
+    -- BOTÃO DE START: key[1]
+    ------------------------------------------------------------
+
+    db_start.clk = clock;
+    db_start.reset = reset;
+    db_start.tick_1ms = tick_1ms;
+    db_start.btn_in = !key[1];
+    start_clean = db_start.btn_out;
+
+    start_old.clk = clock;
+    start_old.clrn = rst_n;
+    start_old.d = start_clean;
+
+    start_pulse = start_clean AND !start_old.q;
+
+    ------------------------------------------------------------
+    -- BOTÕES DE RESPOSTA
+    -- key[2] = resposta 1
+    -- key[3] = resposta 2
+    -- key[4] = resposta 3
+    ------------------------------------------------------------
+
+    db1.clk = clock;
+    db1.reset = reset;
+    db1.tick_1ms = tick_1ms;
+    db1.btn_in = !key[2];
+    btn_clean[0] = db1.btn_out;
+
+    db2.clk = clock;
+    db2.reset = reset;
+    db2.tick_1ms = tick_1ms;
+    db2.btn_in = !key[3];
+    btn_clean[1] = db2.btn_out;
+
+    db3.clk = clock;
+    db3.reset = reset;
+    db3.tick_1ms = tick_1ms;
+    db3.btn_in = !key[4];
+    btn_clean[2] = db3.btn_out;
+
+    btn_old[].clk = clock;
+    btn_old[].clrn = rst_n;
+    btn_old[].d = btn_clean[];
+
+    btn_pulse[0] = btn_clean[0] AND !btn_old[0].q;
+    btn_pulse[1] = btn_clean[1] AND !btn_old[1].q;
+    btn_pulse[2] = btn_clean[2] AND !btn_old[2].q;
+
+    enc1.btn[] = btn_pulse[];
+    btn_code[] = enc1.code[];
+    btn_valid = enc1.valid;
+
+    ------------------------------------------------------------
+    -- RANDOM 1 A 3
+    ------------------------------------------------------------
+
+    rand1.clk = clock;
+    rand1.reset = reset;
+    random_value[] = rand1.random[];
+
+    ------------------------------------------------------------
+    -- MEMÓRIA
+    ------------------------------------------------------------
+
+    mem1.clk = clock;
+    mem1.reset = reset;
+    mem1.wr_en = mem_wr_en;
+    mem1.wr_addr[] = mem_wr_addr[];
+    mem1.rd_addr[] = mem_rd_addr[];
+    mem1.data_in[] = mem_din[];
+    mem_dout[] = mem1.data_out[];
+
+    ------------------------------------------------------------
+    -- COMPARADOR
+    ------------------------------------------------------------
+
+    cmp1.expected[] = mem_dout[];
+    cmp1.button[] = btn_code[];
+    resposta_correta = cmp1.correct;
+
+    ------------------------------------------------------------
+    -- PONTUAÇÃO E RECORDE
+    ------------------------------------------------------------
+
+    score1.clk = clock;
+    score1.reset = reset;
+    score1.clear = score_clear;
+    score1.inc = score_inc;
+    score1.game_over = game_over;
+
+    score_value[] = score1.score[];
+    record_value[] = score1.record[];
+
+    bcd_score.value[] = score_value[];
+    score_dez[] = bcd_score.dez[];
+    score_uni[] = bcd_score.uni[];
+
+    bcd_rec.value[] = record_value[];
+    rec_dez[] = bcd_rec.dez[];
+    rec_uni[] = bcd_rec.uni[];
+
+    ------------------------------------------------------------
+    -- DISPLAY MULTIPLEXADO
+    ------------------------------------------------------------
+
+    display1.clk = clock;
+    display1.reset = reset;
+
+    display1.score_dez[] = score_dez[];
+    display1.score_uni[] = score_uni[];
+
+    display1.rec_dez[] = rec_dez[];
+    display1.rec_uni[] = rec_uni[];
+
+    dig[] = display1.dig[];
+    seg[] = display1.seg[];
+
+    ------------------------------------------------------------
+    -- LEDS
+    ------------------------------------------------------------
+
+    ledc.enable = led_enable;
+    ledc.value[] = led_value[];
+    led_temp[] = ledc.leds[];
+
+    led[1] = led_temp[0];
+    led[2] = led_temp[1];
+    led[3] = led_temp[2];
+    led[4] = GND;
+
+    ------------------------------------------------------------
+    -- BUZZER
+    ------------------------------------------------------------
+
+    buzz1.clk = clock;
+    buzz1.reset = reset;
+    buzz1.mode[] = buzzer_mode[];
+    buzzer = buzz1.buzzer;
+
+    ------------------------------------------------------------
+    -- REGISTRADORES DA MÁQUINA
+    ------------------------------------------------------------
+
+    estado[].clk = clock;
+    estado[].clrn = rst_n;
+
+    rodada[].clk = clock;
+    rodada[].clrn = rst_n;
+
+    indice_show[].clk = clock;
+    indice_show[].clrn = rst_n;
+
+    indice_resp[].clk = clock;
+    indice_resp[].clrn = rst_n;
+
+    timer[].clk = clock;
+    timer[].clrn = rst_n;
+
+    ------------------------------------------------------------
+    -- VALORES PADRÃO
+    ------------------------------------------------------------
+
+    mem_wr_en = GND;
+    mem_wr_addr[] = rodada[].q;
+    mem_rd_addr[] = indice_show[].q;
+    mem_din[] = random_value[];
+
+    led_enable = GND;
+    led_value[] = mem_dout[];
+
+    buzzer_mode[] = 0;
+
+    score_clear = GND;
+    score_inc = GND;
+    game_over = GND;
+
+    ------------------------------------------------------------
+    -- MÁQUINA DE ESTADOS
+    ------------------------------------------------------------
+
+    CASE estado[].q IS
+
+        --------------------------------------------------------
+        -- 0: ESPERA
+        --------------------------------------------------------
+        WHEN 0 =>
+
+            led_enable = GND;
+            buzzer_mode[] = 0;
+
+            rodada[].d = 0;
+            indice_show[].d = 0;
+            indice_resp[].d = 0;
+            timer[].d = 0;
+
+            IF start_pulse THEN
+                estado[].d = 1;
+            ELSE
+                estado[].d = 0;
+            END IF;
+
+        --------------------------------------------------------
+        -- 1: LIMPA PONTUAÇÃO
+        --------------------------------------------------------
+        WHEN 1 =>
+
+            score_clear = VCC;
+            buzzer_mode[] = 4;
+
+            rodada[].d = 0;
+            indice_show[].d = 0;
+            indice_resp[].d = 0;
+            timer[].d = 0;
+
+            estado[].d = 2;
+
+        --------------------------------------------------------
+        -- 2: SOM DE INÍCIO
+        --------------------------------------------------------
+        WHEN 2 =>
+
+            buzzer_mode[] = 4;
+
+            rodada[].d = 0;
+            indice_show[].d = 0;
+            indice_resp[].d = 0;
+
+            IF timer[].q == 25000000 THEN
+                timer[].d = 0;
+                estado[].d = 3;
+            ELSE
+                timer[].d = timer[].q + 1;
+                estado[].d = 2;
+            END IF;
+
+        --------------------------------------------------------
+        -- 3: GERA E SALVA NÚMERO
+        --------------------------------------------------------
+        WHEN 3 =>
+
+            mem_wr_en = VCC;
+            mem_wr_addr[] = rodada[].q;
+            mem_din[] = random_value[];
+
+            indice_show[].d = 0;
+            indice_resp[].d = 0;
+            timer[].d = 0;
+            rodada[].d = rodada[].q;
+
+            estado[].d = 4;
+
+        --------------------------------------------------------
+        -- 4: MOSTRA SEQUÊNCIA
+        --------------------------------------------------------
+        WHEN 4 =>
+
+            mem_rd_addr[] = indice_show[].q;
+
+            led_enable = VCC;
+            led_value[] = mem_dout[];
+
+            buzzer_mode[] = 1;
+
+            rodada[].d = rodada[].q;
+            indice_resp[].d = 0;
+            indice_show[].d = indice_show[].q;
+
+            IF timer[].q == 25000000 THEN
+                timer[].d = 0;
+                estado[].d = 5;
+            ELSE
+                timer[].d = timer[].q + 1;
+                estado[].d = 4;
+            END IF;
+
+        --------------------------------------------------------
+        -- 5: PAUSA ENTRE LEDs
+        --------------------------------------------------------
+        WHEN 5 =>
+
+            led_enable = GND;
+            buzzer_mode[] = 0;
+
+            rodada[].d = rodada[].q;
+            indice_resp[].d = 0;
+
+            IF timer[].q == 10000000 THEN
+
+                timer[].d = 0;
+
+                IF indice_show[].q == rodada[].q THEN
+                    indice_show[].d = 0;
+                    estado[].d = 6;
+                ELSE
+                    indice_show[].d = indice_show[].q + 1;
+                    estado[].d = 4;
+                END IF;
+
+            ELSE
+                timer[].d = timer[].q + 1;
+                indice_show[].d = indice_show[].q;
+                estado[].d = 5;
+            END IF;
+
+        --------------------------------------------------------
+        -- 6: ESPERA RESPOSTA
+        --------------------------------------------------------
+        WHEN 6 =>
+
+            led_enable = GND;
+            buzzer_mode[] = 0;
+
+            mem_rd_addr[] = indice_resp[].q;
+
+            rodada[].d = rodada[].q;
+            indice_show[].d = 0;
+            indice_resp[].d = indice_resp[].q;
+
+            IF btn_valid THEN
+                timer[].d = 0;
+                estado[].d = 7;
+            ELSIF timer[].q == 100000000 THEN
+                timer[].d = 0;
+                estado[].d = 11;
+            ELSE
+                timer[].d = timer[].q + 1;
+                estado[].d = 6;
+            END IF;
+
+        --------------------------------------------------------
+        -- 7: VERIFICA RESPOSTA
+        --------------------------------------------------------
+        WHEN 7 =>
+
+            mem_rd_addr[] = indice_resp[].q;
+
+            led_enable = VCC;
+            led_value[] = btn_code[];
+
+            rodada[].d = rodada[].q;
+            indice_show[].d = 0;
+            timer[].d = 0;
+
+            IF resposta_correta THEN
+
+                IF indice_resp[].q == rodada[].q THEN
+                    indice_resp[].d = 0;
+                    estado[].d = 8;
+                ELSE
+                    indice_resp[].d = indice_resp[].q + 1;
+                    estado[].d = 6;
+                END IF;
+
+            ELSE
+
+                indice_resp[].d = indice_resp[].q;
+                estado[].d = 11;
+
+            END IF;
+
+        --------------------------------------------------------
+        -- 8: INCREMENTA PONTUAÇÃO UMA ÚNICA VEZ
+        --------------------------------------------------------
+        WHEN 8 =>
+
+            score_inc = VCC;
+            buzzer_mode[] = 2;
+
+            rodada[].d = rodada[].q;
+            indice_show[].d = 0;
+            indice_resp[].d = 0;
+            timer[].d = 0;
+
+            estado[].d = 9;
+
+        --------------------------------------------------------
+        -- 9: SOM DE ACERTO
+        --------------------------------------------------------
+        WHEN 9 =>
+
+            buzzer_mode[] = 2;
+
+            indice_show[].d = 0;
+            indice_resp[].d = 0;
+
+            IF timer[].q == 25000000 THEN
+
+                timer[].d = 0;
+
+                IF rodada[].q == 19 THEN
+                    rodada[].d = rodada[].q;
+                    estado[].d = 10;
+                ELSE
+                    rodada[].d = rodada[].q + 1;
+                    estado[].d = 3;
+                END IF;
+
+            ELSE
+
+                timer[].d = timer[].q + 1;
+                rodada[].d = rodada[].q;
+                estado[].d = 9;
+
+            END IF;
+
+        --------------------------------------------------------
+        -- 10: GANHOU O JOGO, CHEGOU A 20
+        --------------------------------------------------------
+        WHEN 10 =>
+
+            game_over = VCC;
+            buzzer_mode[] = 2;
+
+            rodada[].d = rodada[].q;
+            indice_show[].d = 0;
+            indice_resp[].d = 0;
+
+            IF timer[].q == 50000000 THEN
+                timer[].d = 0;
+                estado[].d = 0;
+            ELSE
+                timer[].d = timer[].q + 1;
+                estado[].d = 10;
+            END IF;
+
+        --------------------------------------------------------
+        -- 11: ERROU OU TEMPO ESGOTADO
+        --------------------------------------------------------
+        WHEN 11 =>
+
+            game_over = VCC;
+            buzzer_mode[] = 3;
+
+            rodada[].d = rodada[].q;
+            indice_show[].d = 0;
+            indice_resp[].d = 0;
+
+            IF timer[].q == 50000000 THEN
+                timer[].d = 0;
+                estado[].d = 0;
+            ELSE
+                timer[].d = timer[].q + 1;
+                estado[].d = 11;
+            END IF;
+
+        WHEN OTHERS =>
+
+            estado[].d = 0;
+            rodada[].d = 0;
+            indice_show[].d = 0;
+            indice_resp[].d = 0;
+            timer[].d = 0;
+
+    END CASE;
+
+END;
