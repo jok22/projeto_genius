@@ -1,0 +1,16 @@
+SUBDESIGN comparator
+(
+    expected[1..0] : INPUT;
+    button[1..0]   : INPUT;
+    correct        : OUTPUT
+)
+
+BEGIN
+
+    IF expected[] == button[] THEN
+        correct = VCC;
+    ELSE
+        correct = GND;
+    END IF;
+
+END;
