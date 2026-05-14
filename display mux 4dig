@@ -1,0 +1,88 @@
+SUBDESIGN display_mux_4dig
+(
+    clk : INPUT;
+    reset : INPUT;
+
+    score_dez[3..0] : INPUT;
+    score_uni[3..0] : INPUT;
+
+    rec_dez[3..0] : INPUT;
+    rec_uni[3..0] : INPUT;
+
+    dig[4..1] : OUTPUT;
+    seg[7..0] : OUTPUT
+)
+
+VARIABLE
+
+    scan[1..0] : DFF;
+    contador[15..0] : DFF;
+
+    valor[3..0] : NODE;
+    seg7[6..0] : NODE;
+
+BEGIN
+
+    scan[].clk = clk;
+    scan[].clrn = !reset;
+
+    contador[].clk = clk;
+    contador[].clrn = !reset;
+
+    IF contador[].q == 50000 THEN
+        contador[].d = 0;
+        scan[].d = scan[].q + 1;
+    ELSE
+        contador[].d = contador[].q + 1;
+        scan[].d = scan[].q;
+    END IF;
+
+    CASE scan[].q IS
+
+        WHEN 0 =>
+            dig[] = B"1110";
+            valor[] = score_uni[];
+
+        WHEN 1 =>
+            dig[] = B"1101";
+            valor[] = score_dez[];
+
+        WHEN 2 =>
+            dig[] = B"1011";
+            valor[] = rec_uni[];
+
+        WHEN 3 =>
+            dig[] = B"0111";
+            valor[] = rec_dez[];
+
+    END CASE;
+
+    CASE valor[] IS
+
+        WHEN 0 => seg7[] = B"1000000";
+        WHEN 1 => seg7[] = B"1111001";
+        WHEN 2 => seg7[] = B"0100100";
+        WHEN 3 => seg7[] = B"0110000";
+        WHEN 4 => seg7[] = B"0011001";
+        WHEN 5 => seg7[] = B"0010010";
+        WHEN 6 => seg7[] = B"0000010";
+        WHEN 7 => seg7[] = B"1111000";
+        WHEN 8 => seg7[] = B"0000000";
+        WHEN 9 => seg7[] = B"0010000";
+
+        WHEN OTHERS => seg7[] = B"1111111";
+
+    END CASE;
+
+    seg[0] = seg7[0];
+    seg[1] = seg7[1];
+    seg[2] = seg7[2];
+    seg[3] = seg7[3];
+    seg[4] = seg7[4];
+    seg[5] = seg7[5];
+    seg[6] = seg7[6];
+
+    -- ponto decimal desligado
+    seg[7] = VCC;
+
+END;
