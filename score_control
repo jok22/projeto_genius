@@ -1,0 +1,45 @@
+SUBDESIGN score_control
+(
+    clk          : INPUT;
+    reset        : INPUT;
+    clear        : INPUT;
+    inc          : INPUT;
+    game_over    : INPUT;
+    score[4..0]  : OUTPUT;
+    record[4..0] : OUTPUT
+)
+
+VARIABLE
+    score_reg[4..0]  : DFF;
+    record_reg[4..0] : DFF;
+
+BEGIN
+
+    score_reg[].clk = clk;
+    score_reg[].clrn = !reset;
+
+    record_reg[].clk = clk;
+    record_reg[].clrn = !reset;
+
+    IF clear THEN
+        score_reg[].d = 0;
+    ELSIF inc THEN
+        IF score_reg[].q == 20 THEN
+            score_reg[].d = 20;
+        ELSE
+            score_reg[].d = score_reg[].q + 1;
+        END IF;
+    ELSE
+        score_reg[].d = score_reg[].q;
+    END IF;
+
+    IF game_over AND score_reg[].q > record_reg[].q THEN
+        record_reg[].d = score_reg[].q;
+    ELSE
+        record_reg[].d = record_reg[].q;
+    END IF;
+
+    score[] = score_reg[].q;
+    record[] = record_reg[].q;
+
+END;
