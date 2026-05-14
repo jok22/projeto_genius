@@ -1,0 +1,30 @@
+SUBDESIGN button_encoder_3btn
+(
+    btn[2..0]  : INPUT;
+    code[1..0] : OUTPUT;
+    valid      : OUTPUT
+)
+
+BEGIN
+
+    CASE btn[] IS
+
+        WHEN B"001" =>
+            code[] = 1;
+            valid = VCC;
+
+        WHEN B"010" =>
+            code[] = 2;
+            valid = VCC;
+
+        WHEN B"100" =>
+            code[] = 3;
+            valid = VCC;
+
+        WHEN OTHERS =>
+            code[] = 0;
+            valid = GND;
+
+    END CASE;
+
+END;
