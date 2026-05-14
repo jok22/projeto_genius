@@ -1,0 +1,41 @@
+SUBDESIGN bcd_0_20
+(
+    value[4..0] : INPUT;
+    dez[3..0]   : OUTPUT;
+    uni[3..0]   : OUTPUT
+)
+
+BEGIN
+
+    CASE value[] IS
+
+        WHEN 0  => dez[] = 0; uni[] = 0;
+        WHEN 1  => dez[] = 0; uni[] = 1;
+        WHEN 2  => dez[] = 0; uni[] = 2;
+        WHEN 3  => dez[] = 0; uni[] = 3;
+        WHEN 4  => dez[] = 0; uni[] = 4;
+        WHEN 5  => dez[] = 0; uni[] = 5;
+        WHEN 6  => dez[] = 0; uni[] = 6;
+        WHEN 7  => dez[] = 0; uni[] = 7;
+        WHEN 8  => dez[] = 0; uni[] = 8;
+        WHEN 9  => dez[] = 0; uni[] = 9;
+
+        WHEN 10 => dez[] = 1; uni[] = 0;
+        WHEN 11 => dez[] = 1; uni[] = 1;
+        WHEN 12 => dez[] = 1; uni[] = 2;
+        WHEN 13 => dez[] = 1; uni[] = 3;
+        WHEN 14 => dez[] = 1; uni[] = 4;
+        WHEN 15 => dez[] = 1; uni[] = 5;
+        WHEN 16 => dez[] = 1; uni[] = 6;
+        WHEN 17 => dez[] = 1; uni[] = 7;
+        WHEN 18 => dez[] = 1; uni[] = 8;
+        WHEN 19 => dez[] = 1; uni[] = 9;
+        WHEN 20 => dez[] = 2; uni[] = 0;
+
+        WHEN OTHERS =>
+            dez[] = 0;
+            uni[] = 0;
+
+    END CASE;
+
+END;
