@@ -18,7 +18,7 @@ BEGIN
 		count[].clk = clock;
 		
 -- ENTRADAS DOS FF's --
-		FF1.d = key[1];
+		FF1.d = !key[1];
 		FF2.d = FF1.q;
 	
 -- Criar a ideia da XOR --
