@@ -1,0 +1,70 @@
+TITLE "Divisor de Clock Multi-Frequencia - Buzzer";
+
+SUBDESIGN Divisor_Buzzer_Multi
+(
+    clock      : INPUT;
+    key[4..1]  : INPUT;  
+    buzzer     : OUTPUT;
+)
+VARIABLE
+    contador[16..0] : DFF; 
+    estado_atual    : TFF; 
+BEGIN
+    -- Ligando os clocks aos Flip-Flops
+    contador[].clk = clock;
+    estado_atual.clk = clock;
+
+    -- BOTÃO 1: Frequência de 250 Hz
+    IF (!key[1]) THEN
+        IF (contador[].q >= 99999) THEN
+            contador[].d = 0;      -- Zera a contagem
+            estado_atual.t = VCC;  -- Inverte o estado
+        ELSE
+            contador[].d = contador[].q + 1; -- Incrementa
+            estado_atual.t = GND;            -- Mantém
+        END IF;
+
+    -- BOTÃO 2: Frequência de 500 Hz
+    ELSIF (!key[2]) THEN
+        IF (contador[].q >= 49999) THEN
+            contador[].d = 0;
+            estado_atual.t = VCC; 
+        ELSE
+            contador[].d = contador[].q + 1; 
+            estado_atual.t = GND; 
+        END IF;
+
+    -- BOTÃO 3: Frequência de 750 Hz
+    ELSIF (!key[3]) THEN
+        IF (contador[].q >= 33332) THEN
+            contador[].d = 0;
+            estado_atual.t = VCC; 
+        ELSE
+            contador[].d = contador[].q + 1; 
+            estado_atual.t = GND; 
+        END IF;
+
+    -- BOTÃO 4: Frequência de 1000 Hz
+    ELSIF (!key[4]) THEN
+        IF (contador[].q >= 24999) THEN
+            contador[].d = 0;
+            estado_atual.t = VCC; 
+        ELSE
+            contador[].d = contador[].q + 1; 
+            estado_atual.t = GND; 
+        END IF;
+
+    -- CONDIÇÃO DE REPOUSO: Nenhum botão apertado
+    ELSE
+        contador[].d = 0;       -- Mantém o contador zerado
+        estado_atual.t = GND;   -- Não deixa o flip-flop inverter
+    END IF;
+
+    -- =======================================================
+    -- SAÍDA DO BUZZER
+    -- =======================================================
+    -- O Buzzer só recebe o sinal do estado_atual se pelo menos
+    -- um dos botões estiver sendo apertado
+    buzzer = estado_atual.q AND (!key[1] OR !key[2] OR !key[3] OR !key[4]);
+
+END;

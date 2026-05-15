@@ -1,0 +1,33 @@
+TITLE "Multiplexador de 4 Canais";
+
+SUBDESIGN mux_4canais
+(
+    seletor[1..0]   : INPUT;
+    num1[3..0]      : INPUT;
+    num2[3..0]      : INPUT;
+    num3[3..0]      : INPUT;
+    num4[3..0]      : INPUT;
+    
+    saida_mux[3..0] : OUTPUT;
+)
+
+BEGIN
+    -------------------------------------------------------
+    -- 1. LOGICA DE CHAVEAMENTO (Multiplexacao)
+    -------------------------------------------------------
+    CASE seletor[] IS
+        WHEN B"00" =>
+            saida_mux[] = num1[]; -- Se contador for 0, passa o num1
+            
+        WHEN B"01" =>
+            saida_mux[] = num2[]; -- Se contador for 1, passa o num2
+            
+        WHEN B"10" =>
+            saida_mux[] = num3[]; -- Se contador for 2, passa o num3
+            
+        WHEN B"11" =>
+            saida_mux[] = num4[]; -- Se contador for 3, passa o num4
+            
+    END CASE;
+
+END;

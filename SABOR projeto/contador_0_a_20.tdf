@@ -1,0 +1,47 @@
+TITLE "Contador BCD de 0 a 20";
+
+SUBDESIGN contador_0_a_20
+(
+    botao_clk     : INPUT;  
+    unidade[3..0] : OUTPUT; 
+    dezena[3..0]  : OUTPUT; 
+)
+
+VARIABLE
+    -- Variaveis do Contador BCD
+    reg_uni[3..0] : DFF;    -- Registrador para a unidade
+    reg_dez[3..0] : DFF;    -- Registrador para a dezena
+
+BEGIN
+    -------------------------------------------------------
+    -- 1. CONFIGURACAO DO CLOCK
+    -------------------------------------------------------
+    reg_uni[].clk = botao_clk;
+    reg_dez[].clk = botao_clk;
+
+    -------------------------------------------------------
+    -- 2. LOGICA DO CONTADOR (Maquina de Estados)
+    -------------------------------------------------------
+    IF (reg_dez[].q == 2) AND (reg_uni[].q == 0) THEN
+        -- Se chegou no 20, zera tudo para recomecar
+        reg_uni[].d = 0;
+        reg_dez[].d = 0;
+        
+    ELSIF reg_uni[].q == 9 THEN
+        -- Se a unidade chegou no 9, zera a unidade e soma 1 na dezena
+        reg_uni[].d = 0;
+        reg_dez[].d = reg_dez[].q + 1;
+        
+    ELSE
+        -- Contagem normal: soma 1 na unidade e mantem a dezena
+        reg_uni[].d = reg_uni[].q + 1;
+        reg_dez[].d = reg_dez[].q;
+    END IF;
+
+    -------------------------------------------------------
+    -- 3. ATRIBUICAO DAS SAIDAS
+    -------------------------------------------------------
+    unidade[] = reg_uni[].q;
+    dezena[]  = reg_dez[].q;
+
+END;

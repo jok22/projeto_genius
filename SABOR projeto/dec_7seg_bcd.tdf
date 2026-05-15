@@ -1,0 +1,30 @@
+TITLE "Decodificador BCD para 7 Segmentos";
+
+SUBDESIGN dec_7seg_bcd
+(
+    entrada[3..0] : INPUT;
+    seg[6..0]     : OUTPUT;
+)
+
+BEGIN
+    -------------------------------------------------------
+    -- 1. LOGICA DE DECODIFICACAO (BCD para 7 Segmentos)
+    -------------------------------------------------------
+    CASE entrada[] IS
+        --                     gfedcba
+        WHEN H"0" => seg[] = B"1000000"; -- Acende a,b,c,d,e,f
+        WHEN H"1" => seg[] = B"1111001"; -- Acende b,c
+        WHEN H"2" => seg[] = B"0100100"; -- Acende a,b,d,e,g
+        WHEN H"3" => seg[] = B"0110000"; -- Acende a,b,c,d,g
+        WHEN H"4" => seg[] = B"0011001"; -- Acende b,c,f,g
+        WHEN H"5" => seg[] = B"0010010"; -- Acende a,c,d,f,g
+        WHEN H"6" => seg[] = B"0000010"; -- Acende a,c,d,e,f,g
+        WHEN H"7" => seg[] = B"1111000"; -- Acende a,b,c
+        WHEN H"8" => seg[] = B"0000000"; -- Acende todos
+        WHEN H"9" => seg[] = B"0010000"; -- Acende a,b,c,d,f,g
+        
+        -- Qualquer valor fora de 0 a 9 apaga o display completamente
+        WHEN OTHERS => seg[] = B"1111111"; 
+    END CASE;
+
+END;
