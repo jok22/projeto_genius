@@ -1,0 +1,82 @@
+-- =====================================================================
+-- IMPORTAÇÃO DOS ARQUIVOS DE CABEÇALHO (.INC)
+-- =====================================================================
+INCLUDE "Divisor_Buzzer_Multi.inc";
+INCLUDE "Debounce.inc";
+INCLUDE "contador_0_a_20.inc";
+INCLUDE "mux_4canais.inc";
+INCLUDE "divisor_10khz__contador_2bits.inc";
+INCLUDE "decodificador_2x4.inc";
+INCLUDE "dec_7seg_bcd.inc";
+
+-- =====================================================================
+-- SUBDESIGN PRINCIPAL
+-- =====================================================================
+SUBDESIGN Principal2
+(
+    clock_global    : INPUT; 
+    teclas[4..1]    : INPUT; 
+    
+    buzzer_out      : OUTPUT; 
+    digitos[3..0]   : OUTPUT; 
+    segmentos[6..0] : OUTPUT; 
+)
+
+VARIABLE
+    -- Instanciação dos blocos (O Quartus já sabe as portas graças aos .inc)
+    bloco_buzzer    : Divisor_Buzzer_Multi;
+    bloco_debounce  : Debounce;
+    bloco_contador  : contador_0_a_20;
+    bloco_mux       : mux_4canais;
+    bloco_varredura : divisor_10khz__contador_2bits;
+    bloco_dec_dig   : decodificador_2x4;
+    bloco_7seg      : dec_7seg_bcd;
+
+    -- Nós intermediários para conexões internas
+    sinal_and       : NODE;
+    pulso_incremental : NODE;
+    seletor_varre[1..0] : NODE;
+    dados_digito[3..0]  : NODE;
+
+BEGIN
+    -- 1. CIRCUITO DO BUZZER
+    bloco_buzzer.clock = clock_global;
+    bloco_buzzer.key[4..1] = teclas[4..1];
+    buzzer_out = bloco_buzzer.buzzer;
+
+    -- 2. PORTA LÓGICA AND (Agrupamento das 4 chaves)
+    sinal_and = teclas[4] & teclas[3] & teclas[2] & teclas[1];
+
+    -- 3. DEBOUNCE E CONTADOR 0 A 20
+    bloco_debounce.clock = clock_global;
+    bloco_debounce.key[1] = sinal_and;
+    pulso_incremental = bloco_debounce.led[1];
+
+    bloco_contador.botao_clk = pulso_incremental;
+
+    -- 4. DIVISOR DE VARREDURA E DECODIFICADOR DE DISPLAYS
+    bloco_varredura.clk_in = clock_global;
+    seletor_varre[1..0] = bloco_varredura.bin[1..0];
+
+    bloco_dec_dig.a0 = seletor_varre[0];
+    bloco_dec_dig.a1 = seletor_varre[1];
+
+    digitos[0] = bloco_dec_dig.d0;
+    digitos[1] = bloco_dec_dig.d1;
+    digitos[2] = bloco_dec_dig.d2;
+    digitos[3] = bloco_dec_dig.d3;
+
+    -- 5. MULTIPLEXADOR DE 4 CANAIS
+    bloco_mux.seletor[1..0] = seletor_varre[1..0];
+    bloco_mux.num1[3..0] = bloco_contador.unidade[3..0];
+    bloco_mux.num2[3..0] = bloco_contador.dezena[3..0];
+    bloco_mux.num3[3..0] = GND;
+    bloco_mux.num4[3..0] = GND;
+
+    dados_digito[3..0] = bloco_mux.saida_mux[3..0];
+
+    -- 6. DECODIFICADOR FINAL DE 7 SEGMENTOS
+    bloco_7seg.cntrada[3..0] = dados_digito[3..0];
+    segmentos[6..0] = bloco_7seg.seg[6..0];
+
+END;
