@@ -1,0 +1,69 @@
+TITLE "memoria";
+SUBDESIGN memoria
+(
+    clk             : INPUT;
+    wr              : INPUT;
+    random[1..0]    : INPUT;
+    
+    data_out[1..0]  : OUTPUT;
+)
+
+VARIABLE
+    ----------------------------------------------------------------
+    -- MEMÓRIA DE 20 POSIÇÕES (2 bits por posição)
+    ----------------------------------------------------------------
+    mmr[19..0][1..0] : DFF;
+    
+    ----------------------------------------------------------------
+    -- PONTEIRO DE ESCRITA
+    ----------------------------------------------------------------
+    write_ptr[4..0] : DFF;
+
+BEGIN
+    ----------------------------------------------------------------
+    -- CONEXÃO GLOBAL DOS CLOCKS (Sempre fora de condicionais)
+    ----------------------------------------------------------------
+    write_ptr[].clk = clk;
+    mmr[][].clk     = clk;
+
+    ----------------------------------------------------------------
+    -- CONTROLE DO PONTEIRO
+    ----------------------------------------------------------------
+    IF wr THEN
+        write_ptr[].d = write_ptr[].q + 1;
+    ELSE
+        write_ptr[].d = write_ptr[].q;
+    END IF;
+
+    ----------------------------------------------------------------
+    -- ESCRITA E LEITURA DA MEMÓRIA VIA CASE (Parser Safe)
+    ----------------------------------------------------------------
+    CASE write_ptr[].q IS
+        WHEN 0  => data_out[] = mmr[0][].q;  IF wr THEN mmr[0][].d  = random[]; ELSE mmr[0][].d  = mmr[0][].q;  END IF;
+        WHEN 1  => data_out[] = mmr[1][].q;  IF wr THEN mmr[1][].d  = random[]; ELSE mmr[1][].d  = mmr[1][].q;  END IF;
+        WHEN 2  => data_out[] = mmr[2][].q;  IF wr THEN mmr[2][].d  = random[]; ELSE mmr[2][].d  = mmr[2][].q;  END IF;
+        WHEN 3  => data_out[] = mmr[3][].q;  IF wr THEN mmr[3][].d  = random[]; ELSE mmr[3][].d  = mmr[3][].q;  END IF;
+        WHEN 4  => data_out[] = mmr[4][].q;  IF wr THEN mmr[4][].d  = random[]; ELSE mmr[4][].d  = mmr[4][].q;  END IF;
+        WHEN 5  => data_out[] = mmr[5][].q;  IF wr THEN mmr[5][].d  = random[]; ELSE mmr[5][].d  = mmr[5][].q;  END IF;
+        WHEN 6  => data_out[] = mmr[6][].q;  IF wr THEN mmr[6][].d  = random[]; ELSE mmr[6][].d  = mmr[6][].q;  END IF;
+        WHEN 7  => data_out[] = mmr[7][].q;  IF wr THEN mmr[7][].d  = random[]; ELSE mmr[7][].d  = mmr[7][].q;  END IF;
+        WHEN 8  => data_out[] = mmr[8][].q;  IF wr THEN mmr[8][].d  = random[]; ELSE mmr[8][].d  = mmr[8][].q;  END IF;
+        WHEN 9  => data_out[] = mmr[9][].q;  IF wr THEN mmr[9][].d  = random[]; ELSE mmr[9][].d  = mmr[9][].q;  END IF;
+        WHEN 10 => data_out[] = mmr[10][].q; IF wr THEN mmr[10][].d = random[]; ELSE mmr[10][].d = mmr[10][].q; END IF;
+        WHEN 11 => data_out[] = mmr[11][].q; IF wr THEN mmr[11][].d = random[]; ELSE mmr[11][].d = mmr[11][].q; END IF;
+        WHEN 12 => data_out[] = mmr[12][].q; IF wr THEN mmr[12][].d = random[]; ELSE mmr[12][].d = mmr[12][].q; END IF;
+        WHEN 13 => data_out[] = mmr[13][].q; IF wr THEN mmr[13][].d = random[]; ELSE mmr[13][].d = mmr[13][].q; END IF;
+        WHEN 14 => data_out[] = mmr[14][].q; IF wr THEN mmr[14][].d = random[]; ELSE mmr[14][].d = mmr[14][].q; END IF;
+        WHEN 15 => data_out[] = mmr[15][].q; IF wr THEN mmr[15][].d = random[]; ELSE mmr[15][].d = mmr[15][].q; END IF;
+        WHEN 16 => data_out[] = mmr[16][].q; IF wr THEN mmr[16][].d = random[]; ELSE mmr[16][].d = mmr[16][].q; END IF;
+        WHEN 17 => data_out[] = mmr[17][].q; IF wr THEN mmr[17][].d = random[]; ELSE mmr[17][].d = mmr[17][].q; END IF;
+        WHEN 18 => data_out[] = mmr[18][].q; IF wr THEN mmr[18][].d = random[]; ELSE mmr[18][].d = mmr[18][].q; END IF;
+        WHEN 19 => data_out[] = mmr[19][].q; IF wr THEN mmr[19][].d = random[]; ELSE mmr[19][].d = mmr[19][].q; END IF;
+
+        -- Garante estabilidade para os estados do ponteiro de 20 a 31
+        WHEN OTHERS =>
+            data_out[] = B"00";
+            mmr[][].d  = mmr[][].q;
+    END CASE;
+
+END;
